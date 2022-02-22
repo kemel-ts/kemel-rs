@@ -3,16 +3,22 @@ mod table;
 mod column;
 mod raw;
 mod force_value;
+mod constraint;
+
+use std::{rc::Rc, cell::RefCell};
 
 pub use statement::*;
 pub use table::*;
 pub use column::*;
 pub use raw::*;
 pub use force_value::*;
+pub use constraint::*;
+
 
 pub struct Query {
-    table: Table,
-    columns: Vec<Column>,
+    pub table: Table,
+    pub columns: Vec<Column>,
+    pub constraints: Vec<Rc<Constraint>>,
 }
 
 impl Query {
@@ -21,6 +27,7 @@ impl Query {
         Query {
             table: Table::empty(),
             columns: Vec::new(),
+            constraints: Vec::new(),
         }
     }
 
@@ -50,8 +57,37 @@ impl Query {
         self
     }
 
-    pub fn condition<T>(mut self, a: T) {
+    pub fn condition<T>(self, value: T) -> Rc<Constraint>
+    where T: ToStatement {
+        let queryRef = RefCell::new(Rc::new(self));        
+        
+        let constraint;
+        {
+            constraint = Rc::new(Constraint::new(
+                &queryRef.borrow_mut().clone(),
+                if queryRef.borrow_mut().constraints.len() == 0 { ConstraintType::NoType } else { ConstraintType::And },
+                value,
+            ));
+    
+        }
 
+        queryRef.borrow_mut().clone().constraints.push(constraint.clone());
+
+        constraint
+    }
+
+    pub fn and<T>(self, value: T) -> Rc<Constraint>
+    where T: ToStatement {
+        self.condition(value)
+    }
+
+    pub fn or<T>(self, value: T) -> Rc<Constraint>
+    where T: ToStatement {
+        Rc::new(Constraint::new(
+            &Rc::new(self),
+            ConstraintType::Or,
+            value,
+        ))
     }
     
 }

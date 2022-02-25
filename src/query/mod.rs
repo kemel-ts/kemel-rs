@@ -59,19 +59,20 @@ impl Query {
 
     pub fn condition<T>(self, value: T) -> Rc<Constraint>
     where T: ToStatement {
-        let queryRef = RefCell::new(Rc::new(self));        
+        let constraint_type = if self.constraints.len() == 0 { ConstraintType::NoType } else { ConstraintType::And };
+        let query_ref = Rc::new(RefCell::new(self));
         
         let constraint;
         {
             constraint = Rc::new(Constraint::new(
-                &queryRef.borrow_mut().clone(),
-                if queryRef.borrow_mut().constraints.len() == 0 { ConstraintType::NoType } else { ConstraintType::And },
+                Rc::clone(&query_ref),
+                constraint_type,
                 value,
             ));
     
         }
 
-        queryRef.borrow_mut().clone().constraints.push(constraint.clone());
+        query_ref.borrow_mut().constraints.push(Rc::clone(&constraint));
 
         constraint
     }
@@ -84,7 +85,7 @@ impl Query {
     pub fn or<T>(self, value: T) -> Rc<Constraint>
     where T: ToStatement {
         Rc::new(Constraint::new(
-            &Rc::new(self),
+            Rc::new(RefCell::new(self)),
             ConstraintType::Or,
             value,
         ))

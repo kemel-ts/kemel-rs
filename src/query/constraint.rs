@@ -1,4 +1,4 @@
-use std::{rc::{Rc, Weak}, cell::RefCell};
+use std::{rc::Rc, cell::RefCell};
 
 use crate::{query::statement::*, Query};
 
@@ -26,47 +26,46 @@ pub enum Comparison {
 }
 
 pub struct Constraint {
-    pub parent: RefCell<Option<Weak<Query>>>,
+    pub parent: Option<Rc<RefCell<Query>>>,
     pub constraint_type: ConstraintType,
-    pub rightValue: Statement,
+    pub right_value: Statement,
     pub comparison: Comparison,
-    pub leftValues: Vec<Statement>,
+    pub left_values: Vec<Statement>,
 }
 
 impl Constraint {
-    pub fn new<T>(parent: &Rc<Query>, constraint_type: ConstraintType, value: T) -> Constraint
+    pub fn new<T>(parent: Rc<RefCell<Query>>, constraint_type: ConstraintType, value: T) -> Constraint
     where T: ToStatement {
-        let constraint = Constraint {
-            parent: RefCell::new(None),
+        let mut constraint = Constraint {
+            parent: Option::None,
             constraint_type,
-            rightValue: value.to_statement(),
+            right_value: value.to_statement(),
             comparison: Comparison::NoComparison,
-            leftValues: Vec::new(),
+            left_values: Vec::new(),
         };
 
-        constraint.parent.borrow_mut().replace(Rc::downgrade(parent));
+        constraint.parent = Some(parent);
 
         constraint
     }
 
-    pub fn and<T>(parent: &Rc<Query>, value: T) -> Constraint
+    pub fn and<T>(parent: Rc<RefCell<Query>>, value: T) -> Constraint
     where T: ToStatement {
         Constraint::new(parent, ConstraintType::And, value)
     }
     
-    pub fn or<T>(parent: &Rc<Query>, value: T) -> Constraint
+    pub fn or<T>(parent: Rc<RefCell<Query>>, value: T) -> Constraint
     where T: ToStatement {
         Constraint::new(parent, ConstraintType::Or, value)
     }
 
-    pub fn equal<T>(mut self, value: T) -> Weak<Query> 
+    pub fn equal<T>(mut self, value: T) -> Rc<RefCell<Query>> 
     where T: ToStatement {
         self.comparison = Comparison::Equal;
-        self.leftValues.push(value.to_statement());
+        self.left_values.push(value.to_statement());
 
-        let t = self.parent.borrow();
-        match t.as_ref() {
-            Some(queryRef) => queryRef.clone(),
+        match self.parent {
+            Some(query_ref) => Rc::clone(&query_ref),
             None => panic!("The parent gone"),
         }
     }

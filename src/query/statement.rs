@@ -7,6 +7,14 @@ pub enum Statement {
     StringValue(String),
     Query(Box<Query>),
     Raw(String),
+    I32(i32),
+    F32(f32),
+}
+
+impl Default for Statement {
+    fn default() -> Self {
+        Statement::NoStatement
+    }
 }
 
 pub trait ToStatement {
@@ -40,6 +48,18 @@ impl ToStatement for Query {
 impl ToStatement for Raw {
     fn to_statement(self) -> Statement {
         Statement::Raw(self.value)
+    }
+}
+
+impl ToStatement for i32 {
+    fn to_statement(self) -> Statement {
+        Statement::I32(self)
+    }
+}
+
+impl ToStatement for f32 {
+    fn to_statement(self) -> Statement {
+        Statement::F32(self)
     }
 }
 

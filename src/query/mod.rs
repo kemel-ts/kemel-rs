@@ -14,7 +14,7 @@ pub use raw::*;
 pub use force_value::*;
 pub use constraint::*;
 
-
+#[derive(Default)]
 pub struct Query {
     pub table: Table,
     pub columns: Vec<Column>,
@@ -77,6 +77,11 @@ impl Query {
         constraint
     }
 
+    pub fn where_<T>(self, value: T) -> Rc<Constraint>
+    where T: ToStatement {
+        self.condition(value)
+    }
+
     pub fn and<T>(self, value: T) -> Rc<Constraint>
     where T: ToStatement {
         self.condition(value)
@@ -134,6 +139,25 @@ mod tests {
         for column in query.columns {
             if let Statement::StringValue(tb) = column.value {
                 assert_eq!(tb, String::from(format!("columnName{}", i)));
+            } else {
+                panic!("Unknown TableContainer");
+            }
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn should_store_equal_constraint() {
+        let query = Query::new()
+            .from("table1")
+            .select_range(vec!["columnName1", "columnName2"]);
+
+        query.where_("columnA").equal(35);
+
+        let mut i = 1;
+        for column in query.columns {
+            if let Statement::StringValue(tb) = &column.value {
+                assert_eq!(*tb, String::from(format!("columnName{}", i)));
             } else {
                 panic!("Unknown TableContainer");
             }

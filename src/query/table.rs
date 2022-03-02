@@ -1,5 +1,5 @@
 use crate::query::statement::*;
-
+#[derive(Default)]
 pub struct Table {
     pub value: Statement,
     pub alias: Option<String>,

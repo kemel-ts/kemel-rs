@@ -5,8 +5,6 @@ mod raw;
 mod force_value;
 mod constraint;
 
-use std::{rc::Rc, cell::RefCell, borrow::{BorrowMut, Borrow}};
-
 pub use statement::*;
 pub use table::*;
 pub use column::*;
@@ -238,7 +236,8 @@ mod tests {
             .from("table1")
             .select_range(vec!["columnName1", "columnName2"]);
 
-        query.and_equal("columnA", 35);
+        query    
+            .and_equal("columnA", 35);
 
         let mut i = 1;
         for column in query.columns {

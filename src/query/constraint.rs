@@ -142,10 +142,10 @@ impl Constraint {
         self.set_comparison_no_value(Comparison::IsNotNull)
     }
 
-    pub fn and_equal<T, Y>(leftValue: T, rightValue: Y) -> Constraint
+    pub fn and_equal<T, Y>(left_value: T, right_value: Y) -> Constraint
     where T: ToStatement, Y: ToStatement {
-        let mut constraint = Constraint::and(leftValue);
-        constraint.equal(rightValue);
+        let mut constraint = Constraint::and(left_value);
+        constraint.equal(right_value);
         constraint
     }
 

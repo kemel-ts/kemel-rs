@@ -1,5 +1,6 @@
 use crate::{query::{Query, Raw}, ForceValue};
 
+
 pub enum Statement {
     NoStatement,
     Null,

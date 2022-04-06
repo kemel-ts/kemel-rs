@@ -5,7 +5,7 @@ mod raw;
 mod force_value;
 mod constraint;
 
-use std::{rc::Rc, cell::RefCell};
+use std::{rc::Rc, cell::RefCell, borrow::{BorrowMut, Borrow}};
 
 pub use statement::*;
 pub use table::*;
@@ -18,7 +18,7 @@ pub use constraint::*;
 pub struct Query {
     pub table: Table,
     pub columns: Vec<Column>,
-    pub constraints: Vec<Rc<Constraint>>,
+    pub constraints: Vec<Constraint>,
 }
 
 impl Query {
@@ -57,44 +57,130 @@ impl Query {
         self
     }
 
-    pub fn condition<T>(self, value: T) -> Rc<Constraint>
+    /*pub fn condition<T>(&mut self, value: T) -> Rc<Constraint>
     where T: ToStatement {
         let constraint_type = if self.constraints.len() == 0 { ConstraintType::NoType } else { ConstraintType::And };
-        let query_ref = Rc::new(RefCell::new(self));
         
         let constraint;
         {
             constraint = Rc::new(Constraint::new(
-                Rc::clone(&query_ref),
                 constraint_type,
                 value,
             ));
     
         }
 
-        query_ref.borrow_mut().constraints.push(Rc::clone(&constraint));
+        let ret = Rc::clone(&constraint);
 
-        constraint
+        self.constraints.push(constraint);
+        
+        ret
     }
 
-    pub fn where_<T>(self, value: T) -> Rc<Constraint>
+    pub fn where_<T>(&mut self, value: T) -> Rc<Constraint>
     where T: ToStatement {
         self.condition(value)
     }
 
-    pub fn and<T>(self, value: T) -> Rc<Constraint>
+    pub fn and<T>(&mut self, value: T) -> Rc<Constraint>
     where T: ToStatement {
         self.condition(value)
     }
 
-    pub fn or<T>(self, value: T) -> Rc<Constraint>
+    pub fn or<T>(&mut self, value: T) -> Rc<Constraint>
     where T: ToStatement {
         Rc::new(Constraint::new(
-            Rc::new(RefCell::new(self)),
             ConstraintType::Or,
             value,
         ))
+    }*/
+
+
+
+
+
+
+
+    pub fn and_equal<T, Y>(&mut self, left_value: Y, right_value: T) -> &Query
+    where T: ToStatement, Y: ToStatement {
+        self.constraints.push(
+            Constraint::and_equal(left_value, right_value)
+        );
+        self
     }
+
+    // pub fn and_different<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_greater_than<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_less_than<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_greater_than_or_equal<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_less_than_or_equal<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_between<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_like<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_not_like<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_in_<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_not_in<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_is_null<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
+    // pub fn and_is_not_null<T, Y>(mut self, rightValue: T, leftValue: Y) -> Query
+    // where T: ToStatement, Y: ToStatement {
+    //     self.and(rightValue).equal(leftValue);
+    //     self
+    // }
+
     
 }
 
@@ -148,11 +234,11 @@ mod tests {
 
     #[test]
     fn should_store_equal_constraint() {
-        let query = Query::new()
+        let mut query = Query::new()
             .from("table1")
             .select_range(vec!["columnName1", "columnName2"]);
 
-        query.where_("columnA").equal(35);
+        query.and_equal("columnA", 35);
 
         let mut i = 1;
         for column in query.columns {
